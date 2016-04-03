@@ -1,5 +1,6 @@
 
 import re
+import logging
 from .message import message_out
 
 
@@ -30,13 +31,14 @@ class UserSettingBot(CommandBot):
                 if len(args) == 2:
                     user = manager.waiters[socket]
                     val = parser(args[1])
+
                     if validator(val):
-                        user[setting_name] = val
+                        setattr(user, setting_name, val)
                         msg = "Success! Changed " + setting_name + " to " + str(val) + "."
                         msg_type = "success"
-            except:
-                pass
-            socket.write_message(message_out(msg, _COMMAND_PREFIX, msg_type))
+            except Exception as err:
+                logging.warning(str(err.msg))
+            socket.write_message(message_out(msg, self.command, msg_type))
 
         super().__init__(setting_name, eval_func)
 
@@ -45,7 +47,7 @@ bots = [
     UserSettingBot(
         "nickname",
         "Nicknames can only have letters, numbers and underscores (a-zA-Z0-9_).",
-        lambda x: re.match(r'^[A-Za-z0-9_]+$', x)
+        lambda x: re.match(r'^[A-Za-z0-9_]+$', x) is not None
     ),
     UserSettingBot(
         "radius",
