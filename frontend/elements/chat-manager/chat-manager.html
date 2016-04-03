@@ -1,0 +1,261 @@
+
+<link rel='import' href='../../bower_components/polymer/polymer.html'/>
+
+
+<link rel='import' href='../../bower_components/iron-icons/iron-icons.html'/>
+
+<link rel='import' href='../../bower_components/paper-input/paper-input.html'/>
+<link rel='import' href='../../bower_components/paper-icon-button/paper-icon-button.html'/>
+<link rel='import' href='../../bower_components/paper-material/paper-material.html'/>
+<link rel='import' href='../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html'/>
+<link rel='import' href='../../bower_components/paper-styles/paper-styles.html'/>
+<link rel='import' href='../../bower_components/paper-toolbar/paper-toolbar.html'/>
+
+<link rel='import' href='../../bower_components/google-map/google-map.html'/>
+
+
+<dom-module id='chat-manager'>
+
+  <template>
+    
+    <style>
+      :host {
+        --content-width: 720px;
+        --message-shift: 7%;
+      }
+
+      #map {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+      }
+
+      paper-toolbar .title {
+        margin-left: 24px;
+      }
+
+      #chatMessageContainer {
+        padding-bottom: 100px;
+      }
+
+      .chat-message,
+      #chat-input {
+        display: block;
+
+        width: var(--content-width);
+        max-width: calc(90% - 2*var(--message-shift));
+
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 24px;
+
+        background-color: var(--primary-background-color);
+      }
+
+      .chat-message {
+        padding: 1.3rem;
+        overflow: auto;
+        white-space: nowrap;
+
+        left: auto;
+        right: var(--message-shift);
+      }
+
+      .chat-message[is-user] {
+        right: auto;
+        left: var(--message-shift);
+      }
+
+      .chat-message .user {
+        color: var(--secondary-text-color);
+        margin-right: 0;
+        margin-right: 1rem;
+      }
+
+      .chat-message .user,
+      .chat-message .message {
+        text-align: left;
+        float: left;
+      }
+
+
+      .chat-message[is-user] .user {
+        text-align: right;
+        float: right;
+        margin-left: 1rem;
+        margin-right: 0;
+      }
+
+      .chat-message[msg-type="error"] {
+        color: var(--paper-red-a700);
+      }
+
+      #chat-input {
+        position: fixed;
+        bottom: 24px;
+        left: 0;
+        right: 0;
+
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+    </style>
+
+    <google-map id='map' latitude='[[lat]]' longitude='[[lng]]' draggable='false' disable-default-ui disable-zoom></google-map>
+
+      <paper-scroll-header-panel id='chatMessageSuperContainer' class='content fit' fixed>
+        
+        <paper-material elevation="1" class='paper-header'>
+          <paper-toolbar class='layout vertical'>
+            <div class='title'> Hubub </div>
+          </paper-toolbar>
+        </paper-material>
+
+        <div id='chatMessageContainer'>
+          <template is='dom-repeat' items='[[messages]]' as='message'>
+            <paper-material class='chat-message public' elevation="1" is-user$='[[isUser(message.user)]]' msg-type$='[[message.type]]'>
+              <div class='user'>[[message.user]]</div>
+              <div class='message'>[[message.text]]</div>
+            </paper-material>
+          </template>
+        </div>
+
+        <paper-material id='chat-input' elevation="1">
+          <paper-input maxlength='140' char-counter autocapitalize autocorrect autofocus no-label-float value='{{message}}' on-change='sendMessage'>
+            <paper-icon-button icon='send' suffix on-tap='sendMessage'></paper-icon-button>
+          </paper-input>
+        </paper-material>
+
+    </paper-scroll-header-panel>
+
+  </template>
+
+  <script>
+    Polymer({
+      
+      is: 'chat-manager',
+
+      properties: {
+        'messages': {
+          type: Array,
+          value: []
+        },
+        'message': {
+          type: String
+        },
+        'socketUrl': {
+          type: String,
+          value: 'ws://localhost:8080/socket'
+        }
+      },
+      
+      created: function() {
+        
+        if(navigator.geolocation) {
+          
+          this.supportsLocation = true;
+
+          var _this = this;
+
+          navigator.geolocation.getCurrentPosition(function(position) {
+            
+            loc = position.coords;
+            
+            _this.set('lat', loc.latitude);
+            _this.set('lng', loc.longitude);
+          
+          }, function() {
+          
+            _this.supportsLocation = false;
+          
+          });
+        
+        }
+      },
+
+      ready: function() {
+        this.socket = new WebSocket(this.socketUrl);
+        
+        this.socket.onopen = function() {
+          console.log("Socket connected.");
+        };
+
+        this.socket.onmessage = function(evt) {
+          console.log("recieved message");
+          this.showMessage(JSON.parse(evt.data));
+        }.bind(this);
+
+        this.socket.onclose = function(){ this.showError("Disconnected. Please refresh."); }.bind(this);
+
+        this.user = "carl";
+
+        this.set("messages", [
+          {
+            "user": "world",
+            "text": "hello Carl!",
+          },
+          {
+            "user": "carl",
+            "text": "hai world! how do you do?",
+          },
+          {
+            "user": "world",
+            "text": "hello Carl!",
+          },
+          {
+            "user": "world",
+            "text": "hello Carl!",
+          },
+          {
+            "user": "world",
+            "text": "hello Carl!",
+          },
+          {
+            "user": "world",
+            "text": "hello Carl!",
+          }
+        ]);
+      },
+
+      sendMessage: function() {
+        if (!this.message) return;
+
+        var msg = {
+          "user": this.user,
+          "text": this.message
+        };
+
+        this.socket.send(JSON.stringify(msg));
+        console.log("sent message");
+
+        this.message = "";
+      },
+
+      showError: function(err) {
+        console.log(err);
+        this.showMessage({
+          "text": err,
+          "type": "error"
+        });
+      },
+
+      showMessage: function(msg) {
+        this.push("messages", msg);
+
+        this.async(function(){
+          this.$.chatMessageSuperContainer.scroll(this.$.chatMessageContainer.offsetHeight, true);
+        }, 100);
+      },
+
+      isUser: function(user) {
+        return user === this.user;
+      }
+
+    });
+  </script>
+
+</dom-module>

@@ -1,0 +1,35 @@
+FROM python:3
+MAINTAINER akash (akashgaonkar@gmail.com)
+
+RUN mkdir /var/www
+WORKDIR /var/www
+
+RUN apt-get update && apt-get -y install \ 
+  nodejs \
+  npm
+
+# fixes node not found error
+RUN ln -s /usr/bin/nodejs /usr/bin/node
+
+RUN npm install -g bower
+
+RUN pip install --upgrade pip
+
+# get backend dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt 
+
+# get frontend dependencies (bower modules)
+RUN mkdir frontend
+
+COPY frontend/bower.json frontend
+WORKDIR ./frontend
+
+RUN echo '{"allow_root": true}' > /root/.bowerrc
+
+RUN bower install
+
+# switch back
+WORKDIR /var/www
+
+EXPOSE 8000:8000 3128:3128 443:443

@@ -1,0 +1,16 @@
+FROM python:3
+MAINTAINER akash (akashgaonkar@gmail.com)
+
+RUN mkdir /var/www
+WORKDIR /var/www
+
+RUN pip install --upgrade pip
+
+# get backend dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt 
+
+# switch back
+WORKDIR /var/www
+
+EXPOSE 8080:8080

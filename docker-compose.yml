@@ -1,0 +1,18 @@
+static:
+  build: .
+  dockerfile: dockerfiles/static
+  command: python staticserver.py
+  ports:
+    - "8000:8000"
+    - "3128:3128"
+    - "443:443"
+  volumes:
+    - .:/var/www
+chatmanager:
+  build: .
+  dockerfile: dockerfiles/chatmanager
+  command: python chatmanager.py
+  ports:
+    - "8080:8080"
+  volumes:
+    - .:/var/www

@@ -1,0 +1,33 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../elements/x-custom/x-custom.html">
+
+
+
+<dom-module id="text-input">
+  <template>
+    <paper-input id="chatText" label="Enter message" char-counter maxlength="140"  on-keydown="onEnter"
+      value = "{{chatInput}}">
+    </paper-input>
+  </template>
+  <script>
+    Polymer({
+      is: 'text-input',
+
+      onEnter: function(evt) {
+        if (evt.keyCode === 13) {
+          // enter pressed
+          var chatText = this.chatInput;
+          chatText = this.chatInput;
+          alert(chatText);
+          this.chatInput = "";
+        }
+
+
+
+
+      }
+
+    });
+  </script>
+</dom-module>
