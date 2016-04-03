@@ -195,34 +195,30 @@
 
         this.socket.onclose = function(){ this.showError("Disconnected. Please refresh."); }.bind(this);
 
-        this.user = "carl";
+        this.async(this.sendPosition, 100);
 
         this.set("messages", [
           {
-            "user": "world",
-            "text": "hello Carl!",
-          },
-          {
-            "user": "carl",
-            "text": "hai world! how do you do?",
-          },
-          {
-            "user": "world",
-            "text": "hello Carl!",
-          },
-          {
-            "user": "world",
-            "text": "hello Carl!",
-          },
-          {
-            "user": "world",
-            "text": "hello Carl!",
-          },
-          {
-            "user": "world",
-            "text": "hello Carl!",
+            "text": "Hey world! Please set nickname/radius using the `@$nickname <name>`, `@$radius <radius-in-feet>` commands.",
+            "user": "@$setup"
           }
         ]);
+
+      },
+
+      sendPosition: function() {
+        if (this.socket.readyState) { // check if open
+          this.async(this.sendPosition, 1000);
+          return;
+        }
+
+        this.socket.send({
+          "text": "@latitude " + this.lat
+        });
+
+        this.socket.send({
+          "text": "@longitude " + this.lng
+        });
       },
 
       sendMessage: function() {

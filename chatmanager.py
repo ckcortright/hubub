@@ -49,14 +49,14 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
                 bot.parse(cls, sender, parsed_text)
                 return
 
-        if not user.nickname:
-            sender.write_message(message_out("User setup incomplete. Please set nickname/radius.", "@$setup", "error"))
+        if not user.nickname or user.rad == 0:
+            sender.write_message(message_out("User setup incomplete. Please set nickname/radius using the `@$nickname <name>`, `@$radius <radius-in-feet>` commands.", "@$setup", "error"))
             return
 
         logging.info("%s sending message to %d waiters", user.nickname, len(cls.waiters))
-        for socket, waiter in cls.waiters:
+        for socket, waiter in cls.waiters.items():
             try:
-                if user.in_range(waiter):
+                if waiter.nickname and waiter.rad and user.in_range(waiter):
                     socket.write_message(message_out(msg_text, user.nickname))
             except:
                 logging.error("Error sending message", exc_info=True)
