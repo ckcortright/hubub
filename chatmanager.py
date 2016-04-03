@@ -40,6 +40,7 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_updates(cls, sender, msg):
+        user = cls.get_user(sender)
         msg_text = message_in(msg)["text"]
         parsed_text = shlex.split(msg_text)
         for bot in cls.bots:
@@ -48,8 +49,7 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
                 bot.parse(cls, sender, parsed_text)
                 return
 
-        user = cls.get_user(sender)
-        if not user.nickname: 
+        if not user.nickname:
             sender.write_message(message_out("User setup incomplete. Please set nickname/radius.", "@$setup", "error"))
             return
 
